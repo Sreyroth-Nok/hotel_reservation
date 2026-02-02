@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Guest;
 use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\RoomType;
@@ -15,7 +16,7 @@ class ReservationController extends Controller
      */
     public function index()
     {
-        $reservations = Reservation::with(['user', 'room.roomType', 'payments'])
+        $reservations = Reservation::with(['guest', 'room.roomType', 'payments'])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
@@ -30,8 +31,39 @@ class ReservationController extends Controller
         $available_rooms = Room::with('roomType')
             ->where('status', 'available')
             ->get();
+        
+        // Get all guests
+        $guests = Guest::orderBy('full_name')->get();
 
-        return view('reservations.create', compact('available_rooms'));
+        return view('reservations.create', compact('available_rooms', 'guests'));
+    }
+
+    /**
+     * Store a newly created guest (for reservation form)
+     */
+    public function storeGuest(Request $request)
+    {
+        $validated = $request->validate([
+            'full_name' => 'required|string|max:100',
+            'email' => 'required|email|max:100|unique:guests,email',
+            'phone' => 'required|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'id_card_number' => 'nullable|string|max:50',
+        ]);
+
+        $guest = Guest::create([
+            'full_name' => $validated['full_name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'address' => $validated['address'] ?? null,
+            'id_card_number' => $validated['id_card_number'] ?? null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Guest created successfully!',
+            'guest' => $guest,
+        ]);
     }
 
     /**
@@ -40,7 +72,7 @@ class ReservationController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,user_id',
+            'guest_id' => 'required|exists:guests,guest_id',
             'room_id' => 'required|exists:rooms,room_id',
             'check_in' => 'required|date|after_or_equal:today',
             'check_out' => 'required|date|after:check_in',
@@ -52,7 +84,12 @@ class ReservationController extends Controller
             $room = Room::with('roomType')->findOrFail($validated['room_id']);
 
             // Create reservation
-            $reservation = new Reservation($validated);
+            $reservation = new Reservation();
+            $reservation->guest_id = $validated['guest_id'];
+            $reservation->room_id = $validated['room_id'];
+            $reservation->check_in = $validated['check_in'];
+            $reservation->check_out = $validated['check_out'];
+            $reservation->status = 'booked';
             
             // Calculate total price using OOP method
             $reservation->calculateTotalPrice($room->roomType->price_per_night);
@@ -80,10 +117,28 @@ class ReservationController extends Controller
      */
     public function show($id)
     {
-        $reservation = Reservation::with(['user', 'room.roomType', 'payments'])
+        $reservation = Reservation::with(['guest', 'room.roomType', 'payments'])
             ->findOrFail($id);
 
         return view('reservations.show', compact('reservation'));
+    }
+
+    /**
+     * Show the form for editing the specified reservation
+     */
+    public function edit($id)
+    {
+        $reservation = Reservation::with(['guest', 'room.roomType'])
+            ->findOrFail($id);
+        
+        $available_rooms = Room::with('roomType')
+            ->where('status', 'available')
+            ->orWhere('room_id', $reservation->room_id)
+            ->get();
+        
+        $guests = Guest::orderBy('full_name')->get();
+
+        return view('reservations.edit', compact('reservation', 'available_rooms', 'guests'));
     }
 
     /**
@@ -94,6 +149,7 @@ class ReservationController extends Controller
         $reservation = Reservation::findOrFail($id);
 
         $validated = $request->validate([
+            'guest_id' => 'sometimes|exists:guests,guest_id',
             'check_in' => 'sometimes|date',
             'check_out' => 'sometimes|date|after:check_in',
             'status' => 'sometimes|in:booked,checked_in,checked_out,cancelled',
@@ -153,6 +209,7 @@ class ReservationController extends Controller
     }
 
     /**
+     * 
      * Cancel a reservation
      */
     public function cancel($id)

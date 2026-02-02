@@ -2,30 +2,70 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GuestController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\Auth\LoginController;
 
-// Dashboard
-Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-Route::get('/dashboard/stats', [DashboardController::class, 'getMonthlyStats'])->name('dashboard.stats');
+/*
+|--------------------------------------------------------------------------
+| Authentication Routes
+|--------------------------------------------------------------------------
+*/
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [LoginController::class, 'login'])->name('login.post');
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-// Reservations
-Route::prefix('reservations')->group(function () {
+/*
+|--------------------------------------------------------------------------
+| Dashboard Route (Accessible to all authenticated users)
+|--------------------------------------------------------------------------
+*/
+Route::get('/', [DashboardController::class, 'index'])->name('dashboard')->middleware('auth');
+Route::get('/dashboard/stats', [DashboardController::class, 'getMonthlyStats'])->name('dashboard.stats')->middleware('auth');
+
+/*
+|--------------------------------------------------------------------------
+| Guest Routes (Accessible to staff and admin)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('guests')->middleware(['auth', 'staff'])->group(function () {
+    Route::get('/', [GuestController::class, 'index'])->name('guests.index');
+    Route::get('/create', [GuestController::class, 'create'])->name('guests.create');
+    Route::post('/', [GuestController::class, 'store'])->name('guests.store');
+    Route::get('/{id}', [GuestController::class, 'show'])->name('guests.show');
+    Route::get('/{id}/edit', [GuestController::class, 'edit'])->name('guests.edit');
+    Route::put('/{id}', [GuestController::class, 'update'])->name('guests.update');
+    Route::delete('/{id}', [GuestController::class, 'destroy'])->name('guests.destroy');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Reservation Routes (Accessible to staff and admin)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('reservations')->middleware(['auth', 'staff'])->group(function () {
     Route::get('/', [ReservationController::class, 'index'])->name('reservations.index');
     Route::get('/create', [ReservationController::class, 'create'])->name('reservations.create');
     Route::post('/', [ReservationController::class, 'store'])->name('reservations.store');
     Route::get('/{id}', [ReservationController::class, 'show'])->name('reservations.show');
+    Route::get('/{id}/edit', [ReservationController::class, 'edit'])->name('reservations.edit');
     Route::put('/{id}', [ReservationController::class, 'update'])->name('reservations.update');
     Route::post('/{id}/check-in', [ReservationController::class, 'checkIn'])->name('reservations.check-in');
     Route::post('/{id}/check-out', [ReservationController::class, 'checkOut'])->name('reservations.check-out');
     Route::post('/{id}/cancel', [ReservationController::class, 'cancel'])->name('reservations.cancel');
     Route::post('/check-availability', [ReservationController::class, 'checkAvailability'])->name('reservations.check-availability');
+    Route::post('/guests', [ReservationController::class, 'storeGuest'])->name('reservations.guests.store');
 });
 
-// Rooms
-Route::prefix('rooms')->group(function () {
+/*
+|--------------------------------------------------------------------------
+| Room Routes (Accessible to staff and admin)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('rooms')->middleware(['auth', 'staff'])->group(function () {
     Route::get('/', [RoomController::class, 'index'])->name('rooms.index');
     Route::get('/create', [RoomController::class, 'create'])->name('rooms.create');
     Route::post('/', [RoomController::class, 'store'])->name('rooms.store');
@@ -36,8 +76,12 @@ Route::prefix('rooms')->group(function () {
     Route::get('/type/{type_id}', [RoomController::class, 'getRoomsByType'])->name('rooms.by-type');
 });
 
-// Payments
-Route::prefix('payments')->group(function () {
+/*
+|--------------------------------------------------------------------------
+| Payment Routes (Accessible to staff and admin)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('payments')->middleware(['auth', 'staff'])->group(function () {
     Route::get('/', [PaymentController::class, 'index'])->name('payments.index');
     Route::get('/create/{reservation_id}', [PaymentController::class, 'create'])->name('payments.create');
     Route::post('/', [PaymentController::class, 'store'])->name('payments.store');
@@ -46,12 +90,17 @@ Route::prefix('payments')->group(function () {
     Route::get('/{id}/receipt', [PaymentController::class, 'generateReceipt'])->name('payments.receipt');
 });
 
-// Users (Admin only)
-Route::prefix('users')->middleware('admin')->group(function () {
+/*
+|--------------------------------------------------------------------------
+| User Routes (Admin only)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('users')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/', [UserController::class, 'index'])->name('users.index');
     Route::get('/create', [UserController::class, 'create'])->name('users.create');
     Route::post('/', [UserController::class, 'store'])->name('users.store');
     Route::get('/{id}', [UserController::class, 'show'])->name('users.show');
+    Route::get('/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
     Route::put('/{id}', [UserController::class, 'update'])->name('users.update');
     Route::delete('/{id}', [UserController::class, 'destroy'])->name('users.destroy');
 });

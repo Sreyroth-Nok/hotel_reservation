@@ -14,7 +14,7 @@ class PaymentController extends Controller
      */
     public function index()
     {
-        $payments = Payment::with('reservation.user')
+        $payments = Payment::with('reservation.guest')
             ->orderBy('payment_date', 'desc')
             ->paginate(20);
 
@@ -26,7 +26,7 @@ class PaymentController extends Controller
      */
     public function create($reservation_id)
     {
-        $reservation = Reservation::with(['user', 'room.roomType', 'payments'])
+        $reservation = Reservation::with(['guest', 'room.roomType', 'payments'])
             ->findOrFail($reservation_id);
 
         return view('payments.create', compact('reservation'));
@@ -83,7 +83,7 @@ class PaymentController extends Controller
      */
     public function show($id)
     {
-        $payment = Payment::with('reservation.user')
+        $payment = Payment::with('reservation.guest')
             ->findOrFail($id);
 
         return view('payments.show', compact('payment'));
@@ -110,7 +110,7 @@ class PaymentController extends Controller
      */
     public function generateReceipt($id)
     {
-        $payment = Payment::with(['reservation.user', 'reservation.room.roomType'])
+        $payment = Payment::with(['reservation.guest', 'reservation.room.roomType'])
             ->findOrFail($id);
 
         // Generate PDF receipt (you would use a PDF library here)

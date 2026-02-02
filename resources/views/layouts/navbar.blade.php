@@ -101,7 +101,7 @@
                         </div>
                     </a>
                     <hr class="border-luxury-border">
-                    {{-- <form method="POST" action="{{ route('logout') }}">
+                    <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
                             <div class="flex items-center space-x-2">
@@ -111,7 +111,7 @@
                                 <span>Logout</span>
                             </div>
                         </button>
-                    </form> --}}
+                    </form>
                 </div>
             </div>
         </div>

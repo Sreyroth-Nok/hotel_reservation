@@ -13,7 +13,7 @@ class Reservation extends Model
     protected $primaryKey = 'reservation_id';
     
     protected $fillable = [
-        'user_id',
+        'guest_id',
         'room_id',
         'check_in',
         'check_out',
@@ -28,10 +28,10 @@ class Reservation extends Model
         'created_at' => 'datetime',
     ];
 
-    // Relationship: Reservation belongs to User
-    public function user()
+    // Relationship: Reservation belongs to Guest
+    public function guest()
     {
-        return $this->belongsTo(User::class, 'user_id', 'user_id');
+        return $this->belongsTo(Guest::class, 'guest_id', 'guest_id');
     }
 
     // Relationship: Reservation belongs to Room

@@ -45,12 +45,12 @@
                         <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Guest Information</h3>
                         <div class="flex items-start space-x-4">
                             <div class="w-16 h-16 rounded-full bg-gradient-to-br from-accent to-accent-light flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
-                                {{ substr($reservation->user->full_name, 0, 2) }}
+                                {{ $reservation->guest ? substr($reservation->guest->full_name, 0, 2) : 'N/A' }}
                             </div>
                             <div>
-                                <p class="font-semibold text-gray-900 text-lg">{{ $reservation->user->full_name }}</p>
-                                <p class="text-gray-600 text-sm">{{ $reservation->user->email }}</p>
-                                <p class="text-gray-600 text-sm">{{ $reservation->user->phone }}</p>
+                                <p class="font-semibold text-gray-900 text-lg">{{ $reservation->guest->full_name ?? 'Unknown Guest' }}</p>
+                                <p class="text-gray-600 text-sm">{{ $reservation->guest->email ?? '' }}</p>
+                                <p class="text-gray-600 text-sm">{{ $reservation->guest->phone ?? '' }}</p>
                             </div>
                         </div>
                     </div>

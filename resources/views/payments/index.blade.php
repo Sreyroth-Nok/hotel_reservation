@@ -101,11 +101,11 @@
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
                             <div class="w-10 h-10 rounded-full bg-gradient-to-br from-accent to-accent-light flex items-center justify-center text-white font-semibold text-sm mr-3">
-                                {{ substr($payment->reservation->user->full_name, 0, 2) }}
+                                {{ $payment->reservation->guest ? substr($payment->reservation->guest->full_name, 0, 2) : 'N/A' }}
                             </div>
                             <div>
-                                <div class="text-sm font-medium text-gray-900">{{ $payment->reservation->user->full_name }}</div>
-                                <div class="text-sm text-gray-500">{{ $payment->reservation->user->email }}</div>
+                                <div class="text-sm font-medium text-gray-900">{{ $payment->reservation->guest->full_name ?? 'Unknown Guest' }}</div>
+                                <div class="text-sm text-gray-500">{{ $payment->reservation->guest->email ?? '' }}</div>
                             </div>
                         </div>
                     </td>

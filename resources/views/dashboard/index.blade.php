@@ -4,7 +4,7 @@
 
 @section('page-title', 'Dashboard Overview')
 
-@section('breadcrumb')
+@section('breadcrumb')=
     <li class="inline-flex items-center">
         <span class="text-accent">Dashboard</span>
     </li>
@@ -164,8 +164,8 @@
                         #{{ str_pad($reservation->reservation_id, 5, '0', STR_PAD_LEFT) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-gray-900">{{ $reservation->user->full_name }}</div>
-                        <div class="text-sm text-gray-500">{{ $reservation->user->email }}</div>
+                        <div class="text-sm font-medium text-gray-900">{{ $reservation->guest->full_name ?? 'Unknown Guest' }}</div>
+                        <div class="text-sm text-gray-500">{{ $reservation->guest->email ?? '' }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm font-medium text-gray-900">{{ $reservation->room->room_number }}</div>

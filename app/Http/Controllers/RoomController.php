@@ -51,7 +51,7 @@ class RoomController extends Controller
      */
     public function show($id)
     {
-        $room = Room::with(['roomType', 'reservations.user'])
+        $room = Room::with(['roomType', 'reservations.guest'])
             ->findOrFail($id);
 
         return view('rooms.show', compact('room'));

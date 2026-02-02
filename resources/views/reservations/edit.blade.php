@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
-@section('title', 'Create Reservation - Hotel Reservation System')
+@section('title', 'Edit Reservation - Hotel Reservation System')
 
-@section('page-title', 'Create New Reservation')
+@section('page-title', 'Edit Reservation')
 
 @section('breadcrumb')
     <li class="inline-flex items-center">
@@ -18,7 +18,7 @@
         </svg>
     </li>
     <li class="inline-flex items-center text-accent">
-        Create
+        Edit #{{ str_pad($reservation->reservation_id, 5, '0', STR_PAD_LEFT) }}
     </li>
 @endsection
 
@@ -27,12 +27,13 @@
     <div class="bg-white rounded-2xl border border-luxury-border overflow-hidden shadow-lg">
         <!-- Header -->
         <div class="px-8 py-6 border-b border-luxury-border bg-gradient-to-r from-primary to-primary-dark">
-            <h2 class="text-2xl font-serif font-bold text-white">New Reservation</h2>
-            <p class="text-gray-300 mt-1">Fill in the details to create a new booking</p>
+            <h2 class="text-2xl font-serif font-bold text-white">Edit Reservation</h2>
+            <p class="text-gray-300 mt-1">Update reservation details</p>
         </div>
 
-        <form action="{{ route('reservations.store') }}" method="POST" class="p-8" x-data="reservationForm()">
+        <form action="{{ route('reservations.update', $reservation->reservation_id) }}" method="POST" class="p-8" x-data="reservationForm()">
             @csrf
+            @method('PUT')
 
             <!-- Guest Selection -->
             <div class="mb-8">
@@ -51,19 +52,11 @@
                                     class="w-full px-4 py-3 border border-luxury-border rounded-lg focus:ring-2 focus:ring-accent/50 focus:border-accent transition-colors">
                                 <option value="">Choose a guest...</option>
                                 @foreach($guests ?? [] as $guest)
-                                    <option value="{{ $guest->guest_id }}" {{ old('guest_id') == $guest->guest_id ? 'selected' : '' }}>
+                                    <option value="{{ $guest->guest_id }}" {{ $reservation->guest_id == $guest->guest_id ? 'selected' : '' }}>
                                         {{ $guest->full_name }} ({{ $guest->email }})
                                     </option>
                                 @endforeach
                             </select>
-                            <button type="button" 
-                                    @click="showGuestModal = true"
-                                    class="px-4 py-3 bg-gradient-to-r from-accent to-accent-light text-white rounded-lg hover:shadow-lg transition-all duration-300 font-medium flex items-center space-x-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                                </svg>
-                                <span>New</span>
-                            </button>
                         </div>
                         @error('guest_id')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -87,8 +80,7 @@
                                name="check_in" 
                                x-model="checkIn"
                                @change="calculateNights()"
-                               value="{{ old('check_in') }}"
-                               min="{{ date('Y-m-d') }}"
+                               value="{{ old('check_in', $reservation->check_in->format('Y-m-d')) }}"
                                required 
                                class="w-full px-4 py-3 border border-luxury-border rounded-lg focus:ring-2 focus:ring-accent/50 focus:border-accent transition-colors">
                         @error('check_in')
@@ -101,7 +93,7 @@
                                name="check_out" 
                                x-model="checkOut"
                                @change="calculateNights()"
-                               value="{{ old('check_out') }}"
+                               value="{{ old('check_out', $reservation->check_out->format('Y-m-d')) }}"
                                :min="checkIn"
                                required 
                                class="w-full px-4 py-3 border border-luxury-border rounded-lg focus:ring-2 focus:ring-accent/50 focus:border-accent transition-colors">
@@ -138,7 +130,7 @@
                             @foreach($available_rooms ?? [] as $room)
                                 <option value="{{ $room->room_id }}" 
                                         data-price="{{ $room->roomType->price_per_night }}"
-                                        {{ old('room_id') == $room->room_id ? 'selected' : '' }}>
+                                        {{ $reservation->room_id == $room->room_id ? 'selected' : '' }}>
                                     {{ $room->room_number }} - {{ $room->roomType->type_name }} (${{ number_format($room->roomType->price_per_night, 2) }}/night)
                                 </option>
                             @endforeach
@@ -170,6 +162,24 @@
                 </div>
             </div>
 
+            <!-- Status -->
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Status
+                </h3>
+                <div>
+                    <select name="status" class="w-full px-4 py-3 border border-luxury-border rounded-lg focus:ring-2 focus:ring-accent/50 focus:border-accent transition-colors">
+                        <option value="booked" {{ $reservation->status == 'booked' ? 'selected' : '' }}>Booked</option>
+                        <option value="checked_in" {{ $reservation->status == 'checked_in' ? 'selected' : '' }}>Checked In</option>
+                        <option value="checked_out" {{ $reservation->status == 'checked_out' ? 'selected' : '' }}>Checked Out</option>
+                        <option value="cancelled" {{ $reservation->status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                    </select>
+                </div>
+            </div>
+
             <!-- Action Buttons -->
             <div class="flex items-center justify-end space-x-4 pt-6 border-t border-luxury-border">
                 <a href="{{ route('reservations.index') }}" class="px-6 py-3 border-2 border-luxury-border text-gray-700 rounded-lg hover:bg-luxury-bg transition-colors font-medium">
@@ -179,89 +189,10 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
-                    <span>Create Reservation</span>
+                    <span>Update Reservation</span>
                 </button>
             </div>
         </form>
-    </div>
-</div>
-
-<!-- Guest Creation Modal -->
-<div x-show="showGuestModal" 
-     x-cloak
-     class="fixed inset-0 z-50 overflow-y-auto" 
-     aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <!-- Backdrop -->
-        <div x-show="showGuestModal"
-             x-transition:enter="ease-out duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="ease-in duration-200"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-             @click="showGuestModal = false"
-             class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
-
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-        <!-- Modal Panel -->
-        <div x-show="showGuestModal"
-             x-transition:enter="ease-out duration-300"
-             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-             x-transition:leave="ease-in duration-200"
-             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-             x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-             class="relative inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
-            
-            <form @submit.prevent="createGuest" x-show="!guestCreated">
-                @csrf
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="sm:flex sm:items-start">
-                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                                Add New Guest
-                            </h3>
-                            <div class="mt-4 space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                                    <input type="text" 
-                                           x-model="guestForm.full_name"
-                                           required
-                                           class="w-full px-4 py-2 border border-luxury-border rounded-lg focus:ring-2 focus:ring-accent/50 focus:border-accent">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                                    <input type="email" 
-                                           x-model="guestForm.email"
-                                           required
-                                           class="w-full px-4 py-2 border border-luxury-border rounded-lg focus:ring-2 focus:ring-accent/50 focus:border-accent">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
-                                    <input type="text" 
-                                           x-model="guestForm.phone"
-                                           required
-                                           class="w-full px-4 py-2 border border-luxury-border rounded-lg focus:ring-2 focus:ring-accent/50 focus:border-accent">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="submit" 
-                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-accent text-base font-medium text-white hover:bg-accent-light focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
-                        Create Guest
-                    </button>
-                    <button type="button" 
-                            @click="showGuestModal = false"
-                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                        Cancel
-                    </button>
-                </div>
-            </form>
-        </div>
     </div>
 </div>
 
@@ -269,20 +200,13 @@
 <script>
     function reservationForm() {
         return {
-            checkIn: '',
-            checkOut: '',
-            selectedRoom: '',
-            selectedGuest: '',
-            nights: 0,
-            pricePerNight: 0,
-            totalPrice: 0,
-            showGuestModal: false,
-            guestCreated: false,
-            guestForm: {
-                full_name: '',
-                email: '',
-                phone: ''
-            },
+            checkIn: '{{ $reservation->check_in->format('Y-m-d') }}',
+            checkOut: '{{ $reservation->check_out->format('Y-m-d') }}',
+            selectedRoom: '{{ $reservation->room_id }}',
+            selectedGuest: '{{ $reservation->guest_id ?? '' }}',
+            nights: {{ $reservation->calculateTotalDays() }},
+            pricePerNight: {{ $reservation->room->roomType->price_per_night }},
+            totalPrice: {{ $reservation->total_price }},
 
             calculateNights() {
                 if (this.checkIn && this.checkOut) {
@@ -297,41 +221,10 @@
             updatePrice() {
                 if (this.selectedRoom) {
                     const selectedOption = document.querySelector(`option[value="${this.selectedRoom}"]`);
-                    this.pricePerNight = parseFloat(selectedOption.dataset.price) || 0;
-                    this.totalPrice = this.pricePerNight * this.nights;
-                }
-            },
-
-            async createGuest() {
-                try {
-                    const response = await fetch('{{ route('reservations.guests.store') }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
-                        },
-                        body: JSON.stringify(this.guestForm)
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        // Add new guest to select dropdown
-                        const select = document.querySelector('select[name="guest_id"]');
-                        const option = document.createElement('option');
-                        option.value = data.guest.guest_id;
-                        option.text = `${data.guest.full_name} (${data.guest.email})`;
-                        option.selected = true;
-                        select.appendChild(option);
-                        this.selectedGuest = data.guest.guest_id;
-                        this.showGuestModal = false;
-                        this.guestForm = { full_name: '', email: '', phone: '' };
-                    } else {
-                        alert(data.message || 'Failed to create guest');
+                    if (selectedOption && selectedOption.dataset.price) {
+                        this.pricePerNight = parseFloat(selectedOption.dataset.price) || 0;
+                        this.totalPrice = this.pricePerNight * this.nights;
                     }
-                } catch (error) {
-                    console.error('Error creating guest:', error);
-                    alert('Failed to create guest. Please try again.');
                 }
             }
         }

@@ -43,7 +43,7 @@
             </div>
         </div>
 
-        <!-- Create Button -->
+        <!-- Create Button - Links to separate page -->
         <a href="{{ route('reservations.create') }}" class="px-6 py-2 bg-gradient-to-r from-accent to-accent-light text-white rounded-lg hover:shadow-lg transition-all duration-300 font-medium flex items-center space-x-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -79,11 +79,11 @@
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
                             <div class="w-10 h-10 rounded-full bg-gradient-to-br from-accent to-accent-light flex items-center justify-center text-white font-semibold mr-3">
-                                {{ substr($reservation->user->full_name, 0, 2) }}
+                                {{ $reservation->guest ? substr($reservation->guest->full_name, 0, 2) : 'N/A' }}
                             </div>
                             <div>
-                                <div class="text-sm font-medium text-gray-900">{{ $reservation->user->full_name }}</div>
-                                <div class="text-sm text-gray-500">{{ $reservation->user->email }}</div>
+                                <div class="text-sm font-medium text-gray-900">{{ $reservation->guest->full_name ?? 'Unknown Guest' }}</div>
+                                <div class="text-sm text-gray-500">{{ $reservation->guest->email ?? '' }}</div>
                             </div>
                         </div>
                     </td>

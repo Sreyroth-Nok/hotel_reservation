@@ -25,7 +25,7 @@ class DashboardController extends Controller
             'occupancy_rate' => $this->calculateOccupancyRate(),
         ];
 
-        $recent_reservations = Reservation::with(['user', 'room.roomType'])
+        $recent_reservations = Reservation::with(['guest', 'room.roomType'])
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
