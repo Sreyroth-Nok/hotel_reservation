@@ -6,6 +6,7 @@ use App\Http\Controllers\GuestController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\RoomTypeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\Auth\LoginController;
 
@@ -25,6 +26,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 */
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard')->middleware('auth');
 Route::get('/dashboard/stats', [DashboardController::class, 'getMonthlyStats'])->name('dashboard.stats')->middleware('auth');
+Route::get('/dashboard/reports', [DashboardController::class, 'reports'])->name('dashboard.reports')->middleware('auth');
 
 /*
 |--------------------------------------------------------------------------
@@ -74,6 +76,20 @@ Route::prefix('rooms')->middleware(['auth', 'staff'])->group(function () {
     Route::post('/{id}/status', [RoomController::class, 'changeStatus'])->name('rooms.change-status');
     Route::delete('/{id}', [RoomController::class, 'destroy'])->name('rooms.destroy');
     Route::get('/type/{type_id}', [RoomController::class, 'getRoomsByType'])->name('rooms.by-type');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Room Type Routes (Admin only)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('room-types')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/', [RoomTypeController::class, 'index'])->name('room-types.index');
+    Route::get('/create', [RoomTypeController::class, 'create'])->name('room-types.create');
+    Route::post('/', [RoomTypeController::class, 'store'])->name('room-types.store');
+    Route::get('/{id}/edit', [RoomTypeController::class, 'edit'])->name('room-types.edit');
+    Route::put('/{id}', [RoomTypeController::class, 'update'])->name('room-types.update');
+    Route::delete('/{id}', [RoomTypeController::class, 'destroy'])->name('room-types.destroy');
 });
 
 /*

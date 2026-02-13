@@ -34,7 +34,13 @@ class DashboardController extends Controller
             ->where('status', 'available')
             ->get();
 
-        return view('dashboard.index', compact('stats', 'recent_reservations', 'available_rooms'));
+        // Monthly revenue data for bar chart (last 12 months)
+        $monthly_revenue = $this->getMonthlyRevenueData();
+
+        // Room type distribution for pie chart
+        $room_type_distribution = $this->getRoomTypeDistribution();
+
+        return view('dashboard.index', compact('stats', 'recent_reservations', 'available_rooms', 'monthly_revenue', 'room_type_distribution'));
     }
 
     /**
@@ -76,6 +82,55 @@ class DashboardController extends Controller
             'current_revenue' => $current_revenue,
             'previous_revenue' => $previous_revenue,
             'revenue_growth' => round($revenue_growth, 2),
+        ];
+    }
+
+    /**
+     * Get monthly revenue data for bar chart (last 12 months)
+     */
+    private function getMonthlyRevenueData(): array
+    {
+        $months = [];
+        $revenues = [];
+        
+        for ($i = 11; $i >= 0; $i--) {
+            $date = Carbon::now()->subMonths($i);
+            $months[] = $date->format('M Y');
+            
+            $revenue = Payment::whereMonth('payment_date', $date->month)
+                ->whereYear('payment_date', $date->year)
+                ->sum('amount');
+            $revenues[] = (float) $revenue;
+        }
+        
+        return [
+            'months' => $months,
+            'revenues' => $revenues,
+        ];
+    }
+
+    /**
+     * Get room type distribution for pie chart
+     */
+    private function getRoomTypeDistribution(): array
+    {
+        $room_types = RoomType::withCount('rooms')->get();
+        
+        $labels = $room_types->pluck('type_name')->toArray();
+        $counts = $room_types->pluck('rooms_count')->toArray();
+        $colors = [
+            '#8B5CF6', // Purple
+            '#F59E0B', // Amber
+            '#10B981', // Emerald
+            '#3B82F6', // Blue
+            '#EF4444', // Red
+            '#EC4899', // Pink
+        ];
+        
+        return [
+            'labels' => $labels,
+            'counts' => $counts,
+            'colors' => array_slice($colors, 0, count($labels)),
         ];
     }
 }

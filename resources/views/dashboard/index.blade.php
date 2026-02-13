@@ -4,11 +4,15 @@
 
 @section('page-title', 'Dashboard Overview')
 
-@section('breadcrumb')=
+@section('breadcrumb')
     <li class="inline-flex items-center">
         <span class="text-accent">Dashboard</span>
     </li>
 @endsection
+
+@push('styles')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@endpush
 
 @section('content')
 <!-- Stats Grid -->
@@ -90,8 +94,39 @@
     </div>
 </div>
 
+<!-- Charts Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Monthly Revenue Bar Chart -->
+    <div class="bg-white rounded-2xl border border-luxury-border p-6 hover:shadow-lg transition-all duration-300">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-serif font-semibold text-primary">Monthly Revenue</h2>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-accent"></span>
+                <span class="text-sm text-gray-500">Last 12 Months</span>
+            </div>
+        </div>
+        <div class="relative h-72">
+            <canvas id="revenueBarChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Room Type Distribution Pie Chart -->
+    <div class="bg-white rounded-2xl border border-luxury-border p-6 hover:shadow-lg transition-all duration-300">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-serif font-semibold text-primary">Room Type Distribution</h2>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                <span class="text-sm text-gray-500">By Type</span>
+            </div>
+        </div>
+        <div class="relative h-72 flex items-center justify-center">
+            <canvas id="roomTypePieChart"></canvas>
+        </div>
+    </div>
+</div>
+
 <!-- Quick Actions -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
     <a href="{{ route('reservations.create') }}" class="group bg-white border-2 border-dashed border-luxury-border rounded-xl p-6 hover:border-accent hover:shadow-lg transition-all duration-300 text-center">
         <div class="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-accent/20 transition-colors">
             <svg class="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,6 +167,20 @@
         <h3 class="font-semibold text-gray-800 mb-1">Maintenance</h3>
         <p class="text-sm text-gray-500">Report room issue</p>
     </a>
+
+    @auth
+        @if(auth()->user()->isAdmin())
+        <a href="{{ route('room-types.index') }}" class="group bg-white border-2 border-dashed border-purple-500 rounded-xl p-6 hover:border-purple-600 hover:shadow-lg transition-all duration-300 text-center">
+            <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-purple-200 transition-colors">
+                <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
+            </div>
+            <h3 class="font-semibold text-gray-800 mb-1">Room Types</h3>
+            <p class="text-sm text-gray-500">Manage room types</p>
+        </a>
+        @endif
+    @endauth
 </div>
 
 <!-- Recent Reservations -->
@@ -273,4 +322,129 @@
         </table>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Monthly Revenue Bar Chart
+        const revenueCtx = document.getElementById('revenueBarChart').getContext('2d');
+        const monthlyLabels = <?php echo json_encode($monthly_revenue['months'] ?? []); ?>;
+        const monthlyRevenues = <?php echo json_encode($monthly_revenue['revenues'] ?? []); ?>;
+        
+        new Chart(revenueCtx, {
+            type: 'bar',
+            data: {
+                labels: monthlyLabels,
+                datasets: [{
+                    label: 'Revenue ($)',
+                    data: monthlyRevenues,
+                    backgroundColor: 'rgba(139, 92, 246, 0.8)',
+                    borderColor: 'rgba(139, 92, 246, 1)',
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    hoverBackgroundColor: 'rgba(139, 92, 246, 1)',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return '$' + context.raw.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#6B7280'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(107, 114, 128, 0.1)'
+                        },
+                        ticks: {
+                            color: '#6B7280',
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Room Type Distribution Pie Chart
+        const roomTypeCtx = document.getElementById('roomTypePieChart').getContext('2d');
+        const roomTypeLabels = <?php echo json_encode($room_type_distribution['labels'] ?? []); ?>;
+        const roomTypeCounts = <?php echo json_encode($room_type_distribution['counts'] ?? []); ?>;
+        const roomTypeColors = <?php echo json_encode($room_type_distribution['colors'] ?? ['#8B5CF6', '#F59E0B', '#10B981', '#3B82F6']); ?>;
+        
+        new Chart(roomTypeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: roomTypeLabels,
+                datasets: [{
+                    data: roomTypeCounts,
+                    backgroundColor: roomTypeColors,
+                    borderColor: '#fff',
+                    borderWidth: 3,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            color: '#374151',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((context.raw / total) * 100).toFixed(1);
+                                return context.label + ': ' + context.raw + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+@endpush
+
 @endsection
