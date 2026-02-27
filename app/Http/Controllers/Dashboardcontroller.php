@@ -40,7 +40,12 @@ class DashboardController extends Controller
         // Room type distribution for pie chart
         $room_type_distribution = $this->getRoomTypeDistribution();
 
-        return view('dashboard.index', compact('stats', 'recent_reservations', 'available_rooms', 'monthly_revenue', 'room_type_distribution'));
+        // Statistical reports
+        $revenue_stats = $this->getRevenueStatistics();
+        $reservation_stats = $this->getReservationStatistics();
+        $room_price_stats = $this->getRoomPriceStatistics();
+
+        return view('dashboard.index', compact('stats', 'recent_reservations', 'available_rooms', 'monthly_revenue', 'room_type_distribution', 'revenue_stats', 'reservation_stats', 'room_price_stats'));
     }
 
     /**
@@ -131,6 +136,134 @@ class DashboardController extends Controller
             'labels' => $labels,
             'counts' => $counts,
             'colors' => array_slice($colors, 0, count($labels)),
+        ];
+    }
+
+    /**
+     * Calculate standard deviation for an array of values
+     */
+    private function calculateStdDev(array $values): float
+    {
+        $count = count($values);
+        if ($count === 0) {
+            return 0;
+        }
+        
+        $average = array_sum($values) / $count;
+        $sumSquaredDiff = 0;
+        
+        foreach ($values as $value) {
+            $sumSquaredDiff += pow($value - $average, 2);
+        }
+        
+        return sqrt($sumSquaredDiff / $count);
+    }
+
+    /**
+     * Get revenue statistics (Sum, Average, Max, Min, Range, Std Dev)
+     */
+    private function getRevenueStatistics(): array
+    {
+        $payments = Payment::select('amount')->get();
+        $amounts = $payments->pluck('amount')->toArray();
+        
+        $count = count($amounts);
+        $sum = array_sum($amounts);
+        $average = $count > 0 ? $sum / $count : 0;
+        $max = $count > 0 ? max($amounts) : 0;
+        $min = $count > 0 ? min($amounts) : 0;
+        $range = $max - $min;
+        $std_dev = $this->calculateStdDev($amounts);
+        
+        return [
+            'count' => $count,
+            'sum' => round($sum, 2),
+            'average' => round($average, 2),
+            'max' => round($max, 2),
+            'min' => round($min, 2),
+            'range' => round($range, 2),
+            'std_dev' => round($std_dev, 2),
+        ];
+    }
+
+    /**
+     * Get reservation statistics (Sum, Average, Max, Min, Range, Std Dev)
+     */
+    private function getReservationStatistics(): array
+    {
+        $reservations = Reservation::select('total_price', 'check_in', 'check_out')->get();
+        
+        // Total price statistics
+        $prices = $reservations->pluck('total_price')->toArray();
+        $price_count = count($prices);
+        $price_sum = array_sum($prices);
+        $price_average = $price_count > 0 ? $price_sum / $price_count : 0;
+        $price_max = $price_count > 0 ? max($prices) : 0;
+        $price_min = $price_count > 0 ? min($prices) : 0;
+        $price_range = $price_max - $price_min;
+        $price_std_dev = $this->calculateStdDev($prices);
+        
+        // Length of stay statistics
+        $stays = $reservations->map(function($res) {
+            if ($res->check_in && $res->check_out) {
+                return $res->check_out->diffInDays($res->check_in);
+            }
+            return 0;
+        })->toArray();
+        $filtered_stays = array_filter($stays);
+        $stay_count = count($filtered_stays);
+        $stay_sum = array_sum($filtered_stays);
+        $stay_average = $stay_count > 0 ? $stay_sum / $stay_count : 0;
+        $stay_max = $stay_count > 0 ? max($filtered_stays) : 0;
+        $stay_min = $stay_count > 0 ? min($filtered_stays) : 0;
+        $stay_range = $stay_max - $stay_min;
+        $stay_std_dev = $this->calculateStdDev($filtered_stays);
+        
+        return [
+            'total_reservations' => $reservations->count(),
+            'price' => [
+                'sum' => round($price_sum, 2),
+                'average' => round($price_average, 2),
+                'max' => round($price_max, 2),
+                'min' => round($price_min, 2),
+                'range' => round($price_range, 2),
+                'std_dev' => round($price_std_dev, 2),
+            ],
+            'length_of_stay' => [
+                'sum' => round($stay_sum, 2),
+                'average' => round($stay_average, 2),
+                'max' => round($stay_max, 2),
+                'min' => round($stay_min, 2),
+                'range' => round($stay_range, 2),
+                'std_dev' => round($stay_std_dev, 2),
+            ],
+        ];
+    }
+
+    /**
+     * Get room price statistics (Sum, Average, Max, Min, Range, Std Dev)
+     */
+    private function getRoomPriceStatistics(): array
+    {
+        $room_types = RoomType::select('price_per_night')->get();
+        $prices = $room_types->pluck('price_per_night')->toArray();
+        
+        $count = count($prices);
+        $sum = array_sum($prices);
+        $average = $count > 0 ? $sum / $count : 0;
+        $max = $count > 0 ? max($prices) : 0;
+        $min = $count > 0 ? min($prices) : 0;
+        $range = $max - $min;
+        $std_dev = $this->calculateStdDev($prices);
+        
+        return [
+            'count' => $count,
+            'sum' => round($sum, 2),
+            'average' => round($average, 2),
+            'max' => round($max, 2),
+            'min' => round($min, 2),
+            'range' => round($range, 2),
+            'std_dev' => round($std_dev, 2),
         ];
     }
 }
