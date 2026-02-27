@@ -50,7 +50,67 @@
             </svg>
             <span>New Reservation</span>
         </a>
+        
+        <!-- Export Dropdown -->
+        <div x-data="{ open: false }" class="relative">
+            <button @click="open = !open" class="px-4 py-2 border border-luxury-border rounded-lg hover:bg-luxury-bg transition-colors flex items-center space-x-2">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+                <span class="font-medium">Export</span>
+            </button>
+            
+            <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-luxury-border py-2 z-10">
+                <a href="{{ route('export.reservations.csv', request()->query()) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-luxury-bg flex items-center space-x-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span>Export as CSV</span>
+                </a>
+                <a href="{{ route('export.reservations.pdf', request()->query()) }}" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-luxury-bg flex items-center space-x-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    </svg>
+                    <span>Print Report</span>
+                </a>
+            </div>
+        </div>
     </div>
+</div>
+
+<!-- Search Form -->
+<div class="mb-6 bg-white rounded-xl border border-luxury-border p-4">
+    <form action="{{ route('reservations.index') }}" method="GET" class="flex flex-col md:flex-row gap-4">
+        <div class="flex-1">
+            <div class="relative">
+                <input type="text" 
+                       name="search" 
+                       value="{{ $query ?? '' }}" 
+                       placeholder="Search by guest name, email, reservation ID, or room number..."
+                       class="w-full px-4 py-2 pl-10 border border-luxury-border rounded-lg focus:ring-2 focus:ring-accent/50 focus:border-accent transition-colors">
+                <svg class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <select name="status" class="px-4 py-2 border border-luxury-border rounded-lg focus:ring-2 focus:ring-accent/50 focus:border-accent transition-colors">
+                <option value="">All Status</option>
+                <option value="booked" {{ ($status ?? '') === 'booked' ? 'selected' : '' }}>Booked</option>
+                <option value="checked_in" {{ ($status ?? '') === 'checked_in' ? 'selected' : '' }}>Checked In</option>
+                <option value="checked_out" {{ ($status ?? '') === 'checked_out' ? 'selected' : '' }}>Checked Out</option>
+                <option value="cancelled" {{ ($status ?? '') === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+            </select>
+            <button type="submit" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors font-medium">
+                Search
+            </button>
+            @if($query || $status)
+            <a href="{{ route('reservations.index') }}" class="px-6 py-2 border border-luxury-border text-gray-700 rounded-lg hover:bg-luxury-bg transition-colors font-medium">
+                Clear
+            </a>
+            @endif
+        </div>
+    </form>
 </div>
 
 <!-- Reservations Table -->
