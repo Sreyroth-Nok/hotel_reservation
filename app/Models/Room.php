@@ -18,6 +18,7 @@ class Room extends Model
     ];
 
     // Relationship: Room belongs to RoomType
+    // 
     public function roomType()
     {
         return $this->belongsTo(RoomType::class, 'type_id', 'type_id');
