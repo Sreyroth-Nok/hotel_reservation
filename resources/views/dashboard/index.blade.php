@@ -125,6 +125,167 @@
     </div>
 </div>
 
+<!-- Statistical Reports -->
+<div class="bg-white rounded-2xl border border-luxury-border p-6 mb-8">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-serif font-semibold text-primary">Statistical Reports</h2>
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-accent"></span>
+            <span class="text-sm text-gray-500">Summary Statistics</span>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Revenue Statistics -->
+        <div class="bg-luxury-bg/50 rounded-xl p-6 border border-luxury-border">
+            <h3 class="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Revenue Statistics
+            </h3>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center py-2 border-b border-luxury-border">
+                    <span class="text-gray-600 text-sm">Total Payments</span>
+                    <span class="font-semibold text-gray-800">{{ $revenue_stats['count'] ?? 0 }}</span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-luxury-border">
+                    <span class="text-gray-600 text-sm">Sum</span>
+                    <span class="font-semibold text-green-600">${{ number_format($revenue_stats['sum'] ?? 0, 2) }}</span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-luxury-border">
+                    <span class="text-gray-600 text-sm">Average</span>
+                    <span class="font-semibold text-blue-600">${{ number_format($revenue_stats['average'] ?? 0, 2) }}</span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-luxury-border">
+                    <span class="text-gray-600 text-sm">Maximum</span>
+                    <span class="font-semibold text-purple-600">${{ number_format($revenue_stats['max'] ?? 0, 2) }}</span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-luxury-border">
+                    <span class="text-gray-600 text-sm">Minimum</span>
+                    <span class="font-semibold text-red-600">${{ number_format($revenue_stats['min'] ?? 0, 2) }}</span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-luxury-border">
+                    <span class="text-gray-600 text-sm">Range</span>
+                    <span class="font-semibold text-amber-600">${{ number_format($revenue_stats['range'] ?? 0, 2) }}</span>
+                </div>
+                <div class="flex justify-between items-center py-2">
+                    <span class="text-gray-600 text-sm">Std Dev</span>
+                    <span class="font-semibold text-cyan-600">${{ number_format($revenue_stats['std_dev'] ?? 0, 2) }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Reservation Statistics -->
+        <div class="bg-luxury-bg/50 rounded-xl p-6 border border-luxury-border">
+            <h3 class="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                Reservation Statistics
+            </h3>
+            <div class="mb-4">
+                <p class="text-sm text-gray-500 mb-2">Total Price per Reservation</p>
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center py-1">
+                        <span class="text-gray-600 text-xs">Sum</span>
+                        <span class="font-semibold text-green-600 text-sm">${{ number_format($reservation_stats['price']['sum'] ?? 0, 2) }}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-1">
+                        <span class="text-gray-600 text-xs">Average</span>
+                        <span class="font-semibold text-blue-600 text-sm">${{ number_format($reservation_stats['price']['average'] ?? 0, 2) }}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-1">
+                        <span class="text-gray-600 text-xs">Max</span>
+                        <span class="font-semibold text-purple-600 text-sm">${{ number_format($reservation_stats['price']['max'] ?? 0, 2) }}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-1">
+                        <span class="text-gray-600 text-xs">Min</span>
+                        <span class="font-semibold text-red-600 text-sm">${{ number_format($reservation_stats['price']['min'] ?? 0, 2) }}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-1 border-b border-luxury-border pb-2">
+                        <span class="text-gray-600 text-xs">Range</span>
+                        <span class="font-semibold text-amber-600 text-sm">${{ number_format($reservation_stats['price']['range'] ?? 0, 2) }}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-1">
+                        <span class="text-gray-600 text-xs">Std Dev</span>
+                        <span class="font-semibold text-cyan-600 text-sm">${{ number_format($reservation_stats['price']['std_dev'] ?? 0, 2) }}</span>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 mb-2">Length of Stay (Days)</p>
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center py-1">
+                        <span class="text-gray-600 text-xs">Sum</span>
+                        <span class="font-semibold text-green-600 text-sm">{{ $reservation_stats['length_of_stay']['sum'] ?? 0 }} days</span>
+                    </div>
+                    <div class="flex justify-between items-center py-1">
+                        <span class="text-gray-600 text-xs">Average</span>
+                        <span class="font-semibold text-blue-600 text-sm">{{ number_format($reservation_stats['length_of_stay']['average'] ?? 0, 1) }} days</span>
+                    </div>
+                    <div class="flex justify-between items-center py-1">
+                        <span class="text-gray-600 text-xs">Max</span>
+                        <span class="font-semibold text-purple-600 text-sm">{{ $reservation_stats['length_of_stay']['max'] ?? 0 }} days</span>
+                    </div>
+                    <div class="flex justify-between items-center py-1">
+                        <span class="text-gray-600 text-xs">Min</span>
+                        <span class="font-semibold text-red-600 text-sm">{{ $reservation_stats['length_of_stay']['min'] ?? 0 }} days</span>
+                    </div>
+                    <div class="flex justify-between items-center py-1">
+                        <span class="text-gray-600 text-xs">Range</span>
+                        <span class="font-semibold text-amber-600 text-sm">{{ $reservation_stats['length_of_stay']['range'] ?? 0 }} days</span>
+                    </div>
+                    <div class="flex justify-between items-center py-1">
+                        <span class="text-gray-600 text-xs">Std Dev</span>
+                        <span class="font-semibold text-cyan-600 text-sm">{{ number_format($reservation_stats['length_of_stay']['std_dev'] ?? 0, 2) }} days</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Room Price Statistics -->
+        <div class="bg-luxury-bg/50 rounded-xl p-6 border border-luxury-border">
+            <h3 class="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+                Room Price Statistics
+            </h3>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center py-2 border-b border-luxury-border">
+                    <span class="text-gray-600 text-sm">Room Types</span>
+                    <span class="font-semibold text-gray-800">{{ $room_price_stats['count'] ?? 0 }}</span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-luxury-border">
+                    <span class="text-gray-600 text-sm">Sum</span>
+                    <span class="font-semibold text-green-600">${{ number_format($room_price_stats['sum'] ?? 0, 2) }}</span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-luxury-border">
+                    <span class="text-gray-600 text-sm">Average</span>
+                    <span class="font-semibold text-blue-600">${{ number_format($room_price_stats['average'] ?? 0, 2) }}</span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-luxury-border">
+                    <span class="text-gray-600 text-sm">Maximum</span>
+                    <span class="font-semibold text-purple-600">${{ number_format($room_price_stats['max'] ?? 0, 2) }}</span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-luxury-border">
+                    <span class="text-gray-600 text-sm">Minimum</span>
+                    <span class="font-semibold text-red-600">${{ number_format($room_price_stats['min'] ?? 0, 2) }}</span>
+                </div>
+                <div class="flex justify-between items-center py-2">
+                    <span class="text-gray-600 text-sm">Range</span>
+                    <span class="font-semibold text-amber-600">${{ number_format($room_price_stats['range'] ?? 0, 2) }}</span>
+                </div>
+                <div class="flex justify-between items-center py-2">
+                    <span class="text-gray-600 text-sm">Std Dev</span>
+                    <span class="font-semibold text-cyan-600">${{ number_format($room_price_stats['std_dev'] ?? 0, 2) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Quick Actions -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
     <a href="{{ route('reservations.create') }}" class="group bg-white border-2 border-dashed border-luxury-border rounded-xl p-6 hover:border-accent hover:shadow-lg transition-all duration-300 text-center">

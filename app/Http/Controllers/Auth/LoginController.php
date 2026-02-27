@@ -26,13 +26,13 @@ class LoginController extends Controller
             'password' => 'required|string',
         ]);
 
-        if (Auth::attempt($credentials)) {
+        if (Auth::attempt($credentials, $request->filled('remember'))) {
             $request->session()->regenerate();
             
             return $this->redirectBasedOnRole();
         }
 
-        return back()->withErrors(['username' => 'Invalid credentials.'])->withInput();
+        return back()->withErrors(['username' => 'Invalid credentials.'])->withInput($request->only('username'));
     }
 
     /**
