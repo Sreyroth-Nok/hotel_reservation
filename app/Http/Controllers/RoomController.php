@@ -9,13 +9,31 @@ use Illuminate\Http\Request;
 class RoomController extends Controller
 {
     /**
-     * Display all rooms
+     * Display all rooms with search functionality
      */
-    public function index()
+    public function index(Request $request)
     {
-        $rooms = Room::with('roomType')->paginate(20);
+        $query = $request->get('search');
+        $status = $request->get('status');
+        $type_id = $request->get('type_id');
         
-        return view('rooms.index', compact('rooms'));
+        $rooms = Room::with('roomType')
+            ->when($query, function($q) use ($query) {
+                $q->where('room_number', 'LIKE', "%{$query}%");
+            })
+            ->when($status, function($q) use ($status) {
+                $q->where('status', $status);
+            })
+            ->when($type_id, function($q) use ($type_id) {
+                $q->where('type_id', $type_id);
+            })
+            ->orderBy('room_number')
+            ->paginate(20)
+            ->appends(['search' => $query, 'status' => $status, 'type_id' => $type_id]);
+        
+        $room_types = RoomType::all();
+        
+        return view('rooms.index', compact('rooms', 'room_types', 'query', 'status', 'type_id'));
     }
 
     /**

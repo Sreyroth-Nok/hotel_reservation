@@ -6,21 +6,40 @@ use App\Models\Guest;
 use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\RoomType;
+use App\Services\AuditService;
+use App\Services\EmailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ReservationController extends Controller
 {
     /**
-     * Display all reservations
+     * Display all reservations with search functionality
      */
-    public function index()
+    public function index(Request $request)
     {
+        $query = $request->get('search');
+        $status = $request->get('status');
+        
         $reservations = Reservation::with(['guest', 'room.roomType', 'payments'])
+            ->when($query, function($q) use ($query) {
+                $q->whereHas('guest', function($guestQuery) use ($query) {
+                    $guestQuery->where('full_name', 'LIKE', "%{$query}%")
+                              ->orWhere('email', 'LIKE', "%{$query}%");
+                })
+                ->orWhere('reservation_id', 'LIKE', "%{$query}%")
+                ->orWhereHas('room', function($roomQuery) use ($query) {
+                    $roomQuery->where('room_number', 'LIKE', "%{$query}%");
+                });
+            })
+            ->when($status, function($q) use ($status) {
+                $q->where('status', $status);
+            })
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate(20)
+            ->appends(['search' => $query, 'status' => $status]);
 
-        return view('reservations.index', compact('reservations'));
+        return view('reservations.index', compact('reservations', 'query', 'status'));
     }
 
     /**
@@ -98,11 +117,17 @@ class ReservationController extends Controller
             // Update room status
             $room->changeStatus('occupied');
 
+            // Log the action
+            AuditService::logCreate($reservation, "Created reservation #{$reservation->reservation_id} for {$reservation->guest->full_name}");
+
+            // Send confirmation email
+            EmailService::sendReservationConfirmation($reservation);
+
             DB::commit();
 
             return redirect()
                 ->route('reservations.show', $reservation->reservation_id)
-                ->with('success', 'Reservation created successfully!');
+                ->with('success', 'Reservation created successfully! A confirmation email has been sent.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -147,6 +172,7 @@ class ReservationController extends Controller
     public function update(Request $request, $id)
     {
         $reservation = Reservation::findOrFail($id);
+        $oldValues = $reservation->toArray();
 
         $validated = $request->validate([
             'guest_id' => 'sometimes|exists:guests,guest_id',
@@ -162,6 +188,9 @@ class ReservationController extends Controller
         }
 
         $reservation->update($validated);
+
+        // Log the action
+        AuditService::logUpdate($reservation, $oldValues, "Updated reservation #{$reservation->reservation_id}");
 
         return redirect()
             ->route('reservations.show', $reservation->reservation_id)
@@ -181,9 +210,15 @@ class ReservationController extends Controller
 
         $reservation->checkIn();
 
+        // Log the action
+        AuditService::logCheckIn($reservation, "Checked in guest {$reservation->guest->full_name} to room {$reservation->room->room_number}");
+
+        // Send check-in confirmation email
+        EmailService::sendCheckInConfirmation($reservation);
+
         return redirect()
             ->route('reservations.show', $reservation->reservation_id)
-            ->with('success', 'Guest checked in successfully!');
+            ->with('success', 'Guest checked in successfully! A confirmation email has been sent.');
     }
 
     /**
@@ -203,9 +238,15 @@ class ReservationController extends Controller
 
         $reservation->checkOut();
 
+        // Log the action
+        AuditService::logCheckOut($reservation, "Checked out guest {$reservation->guest->full_name} from room {$reservation->room->room_number}");
+
+        // Send check-out confirmation email
+        EmailService::sendCheckOutConfirmation($reservation);
+
         return redirect()
             ->route('reservations.show', $reservation->reservation_id)
-            ->with('success', 'Guest checked out successfully!');
+            ->with('success', 'Guest checked out successfully! A confirmation email has been sent.');
     }
 
     /**
@@ -222,9 +263,15 @@ class ReservationController extends Controller
 
         $reservation->cancel();
 
+        // Log the action
+        AuditService::logCancel($reservation, "Cancelled reservation #{$reservation->reservation_id} for {$reservation->guest->full_name}");
+
+        // Send cancellation email
+        EmailService::sendCancellationNotice($reservation);
+
         return redirect()
             ->route('reservations.index')
-            ->with('success', 'Reservation cancelled successfully!');
+            ->with('success', 'Reservation cancelled successfully! A cancellation email has been sent.');
     }
 
     /**

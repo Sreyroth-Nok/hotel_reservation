@@ -18,9 +18,32 @@
 
 @section('content')
 <!-- Header -->
-<div class="mb-6">
-    <h1 class="text-3xl font-serif font-bold text-primary mb-2">Payment Records</h1>
-    <p class="text-gray-600">Track all payment transactions</p>
+<div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+    <div class="flex-1">
+        <h1 class="text-3xl font-serif font-bold text-primary mb-2">Payment Records</h1>
+        <p class="text-gray-600">Track all payment transactions</p>
+    </div>
+    
+    <div class="flex items-center space-x-3">
+        <!-- Export Dropdown -->
+        <div x-data="{ open: false }" class="relative">
+            <button @click="open = !open" class="px-4 py-2 border border-luxury-border rounded-lg hover:bg-luxury-bg transition-colors flex items-center space-x-2">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+                <span class="font-medium">Export</span>
+            </button>
+            
+            <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-luxury-border py-2 z-10">
+                <a href="{{ route('export.payments.csv') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-luxury-bg flex items-center space-x-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span>Export as CSV</span>
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Stats -->

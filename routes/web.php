@@ -8,6 +8,8 @@ use App\Http\Controllers\RoomController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\ExportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -76,7 +78,7 @@ Route::prefix('rooms')->middleware(['auth', 'staff'])->group(function () {
     Route::get('/type/{type_id}', [RoomController::class, 'getRoomsByType'])->name('rooms.by-type');
 });
 
-/*
+/* 
 |--------------------------------------------------------------------------
 | Payment Routes (Accessible to staff and admin)
 |--------------------------------------------------------------------------
@@ -103,4 +105,34 @@ Route::prefix('users')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
     Route::put('/{id}', [UserController::class, 'update'])->name('users.update');
     Route::delete('/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Audit Log Routes (Admin only)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('audit-logs')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/', [AuditLogController::class, 'index'])->name('audit-logs.index');
+    Route::get('/{id}', [AuditLogController::class, 'show'])->name('audit-logs.show');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Export Routes (Accessible to staff and admin)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('export')->middleware(['auth', 'staff'])->group(function () {
+    // Reservations export
+    Route::get('/reservations/csv', [ExportController::class, 'reservationsCsv'])->name('export.reservations.csv');
+    Route::get('/reservations/pdf', [ExportController::class, 'reservationsPdf'])->name('export.reservations.pdf');
+    
+    // Guests export
+    Route::get('/guests/csv', [ExportController::class, 'guestsCsv'])->name('export.guests.csv');
+    
+    // Payments export
+    Route::get('/payments/csv', [ExportController::class, 'paymentsCsv'])->name('export.payments.csv');
+    
+    // Rooms export
+    Route::get('/rooms/csv', [ExportController::class, 'roomsCsv'])->name('export.rooms.csv');
 });

@@ -3,17 +3,29 @@
 namespace App\Http\Controllers;
 
 use App\Models\Guest;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 
 class GuestController extends Controller
 {
     /**
-     * Display all guests
+     * Display all guests with search functionality
      */
-    public function index()
+    public function index(Request $request)
     {
-        $guests = Guest::orderBy('created_at', 'desc')->paginate(20);
-        return view('guests.index', compact('guests'));
+        $query = $request->get('search');
+        
+        $guests = Guest::when($query, function($q) use ($query) {
+                $q->where('full_name', 'LIKE', "%{$query}%")
+                  ->orWhere('email', 'LIKE', "%{$query}%")
+                  ->orWhere('phone', 'LIKE', "%{$query}%")
+                  ->orWhere('id_card_number', 'LIKE', "%{$query}%");
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(20)
+            ->appends(['search' => $query]);
+        
+        return view('guests.index', compact('guests', 'query'));
     }
 
     /**
@@ -45,6 +57,9 @@ class GuestController extends Controller
             'id_card_number' => $validated['id_card_number'] ?? null,
         ]);
 
+        // Log the action
+        AuditService::logCreate($guest, "Created guest: {$guest->full_name}");
+
         return redirect()
             ->route('guests.index')
             ->with('success', 'Guest created successfully!');
@@ -75,6 +90,7 @@ class GuestController extends Controller
     public function update(Request $request, $id)
     {
         $guest = Guest::findOrFail($id);
+        $oldValues = $guest->toArray();
 
         $validated = $request->validate([
             'full_name' => 'required|string|max:100',
@@ -91,6 +107,9 @@ class GuestController extends Controller
             'address' => $validated['address'] ?? null,
             'id_card_number' => $validated['id_card_number'] ?? null,
         ]);
+
+        // Log the action
+        AuditService::logUpdate($guest, $oldValues, "Updated guest: {$guest->full_name}");
 
         return redirect()
             ->route('guests.index')
@@ -113,6 +132,11 @@ class GuestController extends Controller
             return back()->withErrors(['error' => 'Cannot delete guest with active reservations.']);
         }
 
+        $guestName = $guest->full_name;
+        
+        // Log the action before deletion
+        AuditService::logDelete($guest, "Deleted guest: {$guestName}");
+        
         $guest->delete();
 
         return redirect()
